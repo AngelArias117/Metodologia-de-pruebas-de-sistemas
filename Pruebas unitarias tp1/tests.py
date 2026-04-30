@@ -31,6 +31,46 @@ class TestReglasNegocio(unittest.TestCase):
         with self.assertRaises(ValueError):
             c.agregar_producto(p, 5)
 
+class TestEstadosSistema(unittest.TestCase):
+
+    # Escenario normal
+    def test_flujo_principal(self):
+        u = Usuario(1, "Angel", "a@mail.com")
+        c = Carrito(u)
+        p = Producto(1, "Mouse", 100, 10)
+        c.agregar_producto(p, 2)
+        px = PlataformaPagoX()
+        compra = Compra(u, c, px)
+        self.assertEqual(compra.estado, 'pendiente')
+        self.assertTrue(compra.finalizar_compra('debito'))
+        self.assertEqual(compra.estado, 'aprobada')
+        self.assertEqual(p.stock, 8)
+        self.assertTrue(c.esta_vacio())
+
+    # Escenario alternativo
+    def test_medio_de_pago_invalido(self):
+        u = Usuario(1, "Angel", "a@mail.com")
+        c = Carrito(u)
+        p = Producto(1, "Mouse", 100, 10)
+        c.agregar_producto(p, 2)
+        px = PlataformaPagoX()
+        compra = Compra(u, c, px)
+        self.assertEqual(compra.estado, 'pendiente')
+        self.assertFalse(compra.finalizar_compra(''))# no se elige un medio de pago
+        self.assertEqual(compra.estado, 'rechazada')
+        self.assertEqual(p.stock, 10)
+        self.assertFalse(c.esta_vacio())
+
+    # Escenario de fallo
+    def test_compra_vacia(self):
+        u = Usuario(1, "Angel", "a@mail.com")
+        c = Carrito(u)
+        self.assertTrue(c.esta_vacio())
+        px = PlataformaPagoX()
+        compra = Compra(u, c, px)
+        self.assertEqual(compra.estado, 'pendiente')
+        self.assertFalse(compra.finalizar_compra('debito'))
+        self.assertEqual(compra.estado, 'rechazada')
 
 if __name__ == '__main__':
     unittest.main()
