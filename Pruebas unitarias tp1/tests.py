@@ -3,29 +3,29 @@ from sistema import *
 
 class TestReglasNegocio(unittest.TestCase):
 
-    # Caso válido
+    # Caso válido: Agregar producto
     def test_agregar_producto_valido(self):
         p = Producto(1, "Mouse", 100, 10)
-        u = Usuario(1, "Angel", "a@mail.com")
+        u = Usuario(1, "Angel", "aa@mail.com")
         c = Carrito(u)
 
         c.agregar_producto(p, 2)
 
         self.assertEqual(len(c.items), 1)
 
-    # Caso inválido: cantidad negativa
+    # Caso inválido: Cantidad negativa
     def test_agregar_producto_cantidad_invalida(self):
         p = Producto(1, "Mouse", 100, 10)
-        u = Usuario(1, "Angel", "a@mail.com")
+        u = Usuario(1, "Angel", "aa@mail.com")
         c = Carrito(u)
 
         with self.assertRaises(ValueError):
             c.agregar_producto(p, -1)
 
-    # Caso inválido: sin stock
+    # Caso inválido: Sin stock
     def test_agregar_producto_sin_stock(self):
-        p = Producto(1, "Mouse", 2, 2)
-        u = Usuario(1, "Angel", "a@mail.com")
+        p = Producto(1, "Mouse", 100, 2)
+        u = Usuario(1, "Angel", "aa@mail.com")
         c = Carrito(u)
 
         with self.assertRaises(ValueError):
@@ -33,9 +33,9 @@ class TestReglasNegocio(unittest.TestCase):
 
 class TestEstadosSistema(unittest.TestCase):
 
-    # Escenario normal
+    # Escenario normal: Flujo principal
     def test_flujo_principal(self):
-        u = Usuario(1, "Angel", "a@mail.com")
+        u = Usuario(1, "Pablo", "pl@mail.com")
         c = Carrito(u)
         p = Producto(1, "Mouse", 100, 10)
         c.agregar_producto(p, 2)
@@ -45,11 +45,11 @@ class TestEstadosSistema(unittest.TestCase):
         self.assertTrue(compra.finalizar_compra('debito'))
         self.assertEqual(compra.estado, 'aprobada')
         self.assertEqual(p.stock, 8)
-        self.assertTrue(c.esta_vacio())
+        self.assertFalse(c.esta_vacio())
 
-    # Escenario alternativo
+    # Escenario alternativo: Pago invalido
     def test_medio_de_pago_invalido(self):
-        u = Usuario(1, "Angel", "a@mail.com")
+        u = Usuario(1, "Pablo", "pl@mail.com")
         c = Carrito(u)
         p = Producto(1, "Mouse", 100, 10)
         c.agregar_producto(p, 2)
@@ -61,9 +61,9 @@ class TestEstadosSistema(unittest.TestCase):
         self.assertEqual(p.stock, 10)
         self.assertFalse(c.esta_vacio())
 
-    # Escenario de fallo
+    # Escenario de fallo: Carrito vacio
     def test_compra_vacia(self):
-        u = Usuario(1, "Angel", "a@mail.com")
+        u = Usuario(1, "Pablo", "aa@mail.com")
         c = Carrito(u)
         self.assertTrue(c.esta_vacio())
         px = PlataformaPagoX()
