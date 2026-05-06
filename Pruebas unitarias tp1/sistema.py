@@ -64,6 +64,9 @@ class Carrito:
             cantidad = item["cantidad"]
             producto.descontar_stock(cantidad)
 
+        #Vacia el carrito
+        self.items.clear()
+
 
 class PlataformaPagoX:
     MEDIOS_VALIDOS = ["credito", "debito", "transferencia"]

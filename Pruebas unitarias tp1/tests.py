@@ -45,7 +45,7 @@ class TestEstadosSistema(unittest.TestCase):
         self.assertTrue(compra.finalizar_compra('debito'))
         self.assertEqual(compra.estado, 'aprobada')
         self.assertEqual(p.stock, 8)
-        self.assertFalse(c.esta_vacio())
+        self.assertTrue(c.esta_vacio())
 
     # Escenario alternativo: Pago invalido
     def test_medio_de_pago_invalido(self):
