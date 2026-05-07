@@ -3,74 +3,76 @@ from sistema import *
 
 class TestReglasNegocio(unittest.TestCase):
 
+    # Definicion de variables antes de cada test
+    def setUp(self):
+        self.producto = Producto(1, "Mouse", 100, 10)
+        self.usuario = Usuario(1, "Angel", "aa@mail.com")
+        self.carrito = Carrito(self.usuario)
+
     # Caso válido: Agregar producto
-    def test_agregar_producto_valido(self):
-        p = Producto(1, "Mouse", 100, 10)
-        u = Usuario(1, "Angel", "aa@mail.com")
-        c = Carrito(u)
-
-        c.agregar_producto(p, 2)
-
-        self.assertEqual(len(c.items), 1)
+    def test_01_agregar_producto_valido(self):
+        self.carrito.agregar_producto(self.producto, 2)
+        self.assertEqual(len(self.carrito.items), 1)
 
     # Caso inválido: Cantidad negativa
-    def test_agregar_producto_cantidad_invalida(self):
-        p = Producto(1, "Mouse", 100, 10)
-        u = Usuario(1, "Angel", "aa@mail.com")
-        c = Carrito(u)
-
+    def test_02_agregar_producto_cantidad_invalida(self):
         with self.assertRaises(ValueError):
-            c.agregar_producto(p, -1)
+            self.carrito.agregar_producto(self.producto, -1)
 
     # Caso inválido: Sin stock
-    def test_agregar_producto_sin_stock(self):
-        p = Producto(1, "Mouse", 100, 2)
-        u = Usuario(1, "Angel", "aa@mail.com")
-        c = Carrito(u)
-
+    def test_03_agregar_producto_sin_stock(self):
         with self.assertRaises(ValueError):
-            c.agregar_producto(p, 5)
+            self.carrito.agregar_producto(self.producto, 15)
 
 class TestEstadosSistema(unittest.TestCase):
 
+    # Definicion de variables antes de cada test
+    def setUp(self):
+        self.usuario = Usuario(1, "Pablo", "pl@mail.com")
+        self.carrito = Carrito(self.usuario)
+        self.producto = Producto(1, "Mouse", 100, 10)
+        self.px = PlataformaPagoX()
+        self.compra = Compra(self.usuario, self.carrito, self.px)
+
     # Escenario normal: Flujo principal
-    def test_flujo_principal(self):
-        u = Usuario(1, "Pablo", "pl@mail.com")
-        c = Carrito(u)
-        p = Producto(1, "Mouse", 100, 10)
-        c.agregar_producto(p, 2)
-        px = PlataformaPagoX()
-        compra = Compra(u, c, px)
-        self.assertEqual(compra.estado, 'pendiente')
-        self.assertTrue(compra.finalizar_compra('debito'))
-        self.assertEqual(compra.estado, 'aprobada')
-        self.assertEqual(p.stock, 8)
-        self.assertTrue(c.esta_vacio())
+    def test_04_flujo_principal(self):
+        self.carrito.agregar_producto(self.producto, 2)
+        self.assertEqual(self.compra.estado, 'pendiente')
+        self.assertEqual(self.compra.carrito.calcular_total(), 200)
+        self.assertTrue(self.compra.finalizar_compra('debito'))
+        self.assertEqual(self.compra.estado, 'aprobada')
+        self.assertTrue(self.carrito.esta_vacio())
+        self.assertEqual(self.producto.stock, 8)
 
-    # Escenario alternativo: Pago invalido
-    def test_medio_de_pago_invalido(self):
-        u = Usuario(1, "Pablo", "pl@mail.com")
-        c = Carrito(u)
-        p = Producto(1, "Mouse", 100, 10)
-        c.agregar_producto(p, 2)
-        px = PlataformaPagoX()
-        compra = Compra(u, c, px)
-        self.assertEqual(compra.estado, 'pendiente')
-        self.assertFalse(compra.finalizar_compra(''))# no se elige un medio de pago
-        self.assertEqual(compra.estado, 'rechazada')
-        self.assertEqual(p.stock, 10)
-        self.assertFalse(c.esta_vacio())
+    # Escenario alternativo: Compra mas de un producto
+    def test_07_varios_productos(self):
+        self.carrito.agregar_producto(self.producto, 2)
+        teclado = Producto(2, "Teclado", 60, 7)
+        self.carrito.agregar_producto(teclado, 2)
+        self.assertEqual(self.compra.estado, 'pendiente')
+        self.assertEqual(self.compra.carrito.calcular_total(), 320)
+        self.assertTrue(self.compra.finalizar_compra('debito'))
+        self.assertEqual(self.compra.estado, 'aprobada')
+        self.assertTrue(self.carrito.esta_vacio())
+        self.assertEqual(self.producto.stock, 8)
+        self.assertEqual(teclado.stock, 5)
 
-    # Escenario de fallo: Carrito vacio
-    def test_compra_vacia(self):
-        u = Usuario(1, "Pablo", "aa@mail.com")
-        c = Carrito(u)
-        self.assertTrue(c.esta_vacio())
-        px = PlataformaPagoX()
-        compra = Compra(u, c, px)
-        self.assertEqual(compra.estado, 'pendiente')
-        self.assertFalse(compra.finalizar_compra('debito'))
-        self.assertEqual(compra.estado, 'rechazada')
+    # Escenarios de fallo:
+    # Pago invalido
+    def test_05_medio_de_pago_invalido(self):
+        self.carrito.agregar_producto(self.producto, 2)
+        self.assertEqual(self.compra.estado, 'pendiente')
+        self.assertFalse(self.compra.finalizar_compra(''))# no se elige un medio de pago
+        self.assertEqual(self.compra.estado, 'rechazada')
+        self.assertEqual(self.producto.stock, 10)
+        self.assertFalse(self.carrito.esta_vacio())
+    #  Carrito vacio
+    def test_06_compra_vacia(self):
+        self.assertTrue(self.carrito.esta_vacio())
+        self.assertEqual(self.compra.estado, 'pendiente')
+        self.assertFalse(self.compra.finalizar_compra('debito'))
+        self.assertEqual(self.compra.estado, 'rechazada')
+
 
 if __name__ == '__main__':
     unittest.main()
